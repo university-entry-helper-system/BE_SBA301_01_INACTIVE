@@ -14,9 +14,13 @@ public interface AccountService {
 
     long saveAccount(AccountRequestDTO request);
 
+    long saveAccount(Account account);
+
     UserDetailsService accountDetailsService();
 
     Account getByUsername(String username);
+
+    Account getAccountByEmail(String email);
 
     List<Role> findRolesByAccountId(long accountId);
 

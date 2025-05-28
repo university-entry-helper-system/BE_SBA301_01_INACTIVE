@@ -5,9 +5,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 
+import org.example.sba.configuration.Translator;
 import org.example.sba.dto.request.AccountRequestDTO;
 import org.example.sba.dto.response.AccountDetailResponse;
 import org.example.sba.dto.response.PageResponse;
+import org.example.sba.exception.ResourceNotFoundException;
 import org.example.sba.model.Account;
 import org.example.sba.model.Role;
 import org.example.sba.repository.AccountRepository;
@@ -52,6 +54,12 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    public long saveAccount(Account account) {
+        accountRepository.save(account);
+        return account.getId();
+    }
+
+    @Override
     public UserDetailsService accountDetailsService() {
         return username -> accountRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("Account not found"));
     }
@@ -59,6 +67,11 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public Account getByUsername(String username) {
         return accountRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("Account not found"));
+    }
+
+    @Override
+    public Account getAccountByEmail(String email) {
+        return accountRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException(Translator.toLocale("error.email.not.found")));
     }
 
     @Override

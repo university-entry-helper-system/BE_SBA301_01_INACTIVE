@@ -6,7 +6,7 @@ public interface TokenService {
 
     Token getTokenByUsername(String username);
 
-    int saveToken(Token token);
+    int save(Token token);
 
-    void deleteTokenByUsername(String username);
+    void delete(String username);
 }

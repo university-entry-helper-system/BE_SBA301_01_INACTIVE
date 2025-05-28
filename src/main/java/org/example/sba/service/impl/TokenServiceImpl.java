@@ -26,7 +26,7 @@ public class TokenServiceImpl implements TokenService {
     }
 
     @Override
-    public int saveToken(Token token) {
+    public int save(Token token) {
         Optional<Token> optional = tokenRepository.findByUsername(token.getUsername());
         if (optional.isEmpty()) {
             tokenRepository.save(token);
@@ -41,7 +41,7 @@ public class TokenServiceImpl implements TokenService {
     }
 
     @Override
-    public void deleteTokenByUsername(String username) {
+    public void delete(String username) {
         Token token = getTokenByUsername(username);
         tokenRepository.delete(token);
     }

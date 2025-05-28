@@ -9,6 +9,8 @@ public interface JwtService {
 
     String generateRefreshToken(UserDetails account);
 
+    String generateResetToken(UserDetails account);
+
     String extractUsername(String token, TokenType type);
 
     boolean isValid(String token, TokenType type, UserDetails account);
