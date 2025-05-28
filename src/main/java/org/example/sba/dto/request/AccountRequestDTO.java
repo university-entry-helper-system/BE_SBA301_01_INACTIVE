@@ -1,55 +1,48 @@
 package org.example.sba.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-
-import org.example.sba.dto.validator.EnumPattern;
-import org.example.sba.dto.validator.PhoneNumber;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import jakarta.validation.constraints.*;
+import lombok.*;
+import org.example.sba.util.CustomDateDeserializer;
 import org.example.sba.util.Gender;
-import org.example.sba.util.AccountStatus;
-import org.springframework.format.annotation.DateTimeFormat;
 
-import java.io.Serializable;
-import java.util.Date;
+import java.sql.Date;
 
-@Getter
-public class AccountRequestDTO implements Serializable {
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class AccountRequestDTO {
 
-    @NotBlank(message = "firstName must be not blank") // Khong cho phep gia tri blank
+    @NotBlank(message = "First name must not be blank")
+    @Size(max = 50, message = "First name must not exceed 50 characters")
     private String firstName;
 
-    @NotNull(message = "lastName must be not null") // Khong cho phep gia tri null
+    @NotBlank(message = "Last name must not be blank")
+    @Size(max = 50, message = "Last name must not exceed 50 characters")
     private String lastName;
 
-    @Email(message = "email invalid format") // Chi chap nhan nhung gia tri dung dinh dang email
-    private String email;
-
-    @PhoneNumber(message = "phone invalid format")
-    private String phone;
-
-    @NotNull(message = "dateOfBirth must be not null")
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-    @JsonFormat(pattern = "MM/dd/yyyy")
+    @NotNull(message = "Date of birth must not be null")
+    @JsonFormat(pattern = "yyyy-MM-dd") // Ensure the date format is correctly parsed
+    @JsonDeserialize(using = CustomDateDeserializer.class)
     private Date dateOfBirth;
 
+    @NotNull(message = "Gender must not be null")
     private Gender gender;
 
-    @NotNull(message = "username must be not null")
+    @Pattern(regexp = "^(\\+\\d{1,3})?\\d{9,12}$", message = "Invalid phone number")
+    private String phone;
+
+    @NotBlank(message = "Email must not be blank")
+    @Email(message = "Invalid email format")
+    private String email;
+
+    @NotBlank(message = "Username must not be blank")
+    @Size(min = 4, max = 20, message = "Username must be between 4 and 20 characters")
     private String username;
 
-    @NotNull(message = "password must be not null")
+    @NotBlank(message = "Password must not be blank")
+    @Size(min = 8, message = "Password must be at least 8 characters")
     private String password;
-
-    @EnumPattern(name = "status", regexp = "ACTIVE|INACTIVE|NONE")
-    private AccountStatus status;
-
-    public AccountRequestDTO(String firstName, String lastName, String email, String phone) {
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.email = email;
-        this.phone = phone;
-    }
 }

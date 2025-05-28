@@ -4,7 +4,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.example.sba.dto.request.ResetPasswordDTO;
 import org.example.sba.dto.request.SignInRequest;
 import org.example.sba.dto.response.TokenResponse;
-import org.example.sba.model.Account;
 
 public interface AuthenticationService {
 
@@ -19,4 +18,6 @@ public interface AuthenticationService {
     String resetPassword(String secretKey);
 
     String changePassword(ResetPasswordDTO request);
+
+    String logout(HttpServletRequest request);
 }

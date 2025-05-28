@@ -8,6 +8,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -28,15 +29,14 @@ import static org.example.sba.util.TokenType.ACCESS_TOKEN;
 @RequiredArgsConstructor
 public class PreFilter extends OncePerRequestFilter {
 
-    private final AccountService accountService;
     private final JwtService jwtService;
+    private final AccountService accountService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain) throws ServletException, IOException {
         log.info("---------- doFilterInternal ----------");
 
         final String authorization = request.getHeader(AUTHORIZATION);
-        //log.info("Authorization: {}", authorization);
 
         if (StringUtils.isBlank(authorization) || !authorization.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);

@@ -14,6 +14,8 @@ public interface AccountService {
 
     long saveAccount(AccountRequestDTO request);
 
+    long saveAdmin(AccountRequestDTO request);
+
     long saveAccount(Account account);
 
     UserDetailsService accountDetailsService();
@@ -33,4 +35,6 @@ public interface AccountService {
     AccountDetailResponse getAccount(long accountId);
 
     PageResponse<?> getAllAccounts(int pageNo, int pageSize);
+
+    void confirmAccountByEmail(String email);
 }

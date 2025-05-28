@@ -38,6 +38,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final RedisTokenService redisTokenService;
     private final PasswordEncoder passwordEncoder;
 
+    @Override
     public TokenResponse accessToken(SignInRequest signInRequest) {
         log.info("---------- accessToken ----------");
 
@@ -66,6 +67,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .build();
     }
 
+    @Override
     public TokenResponse refreshToken(HttpServletRequest request) {
         log.info("---------- refreshToken ----------");
 
@@ -90,6 +92,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .build();
     }
 
+    @Override
     public String removeToken(HttpServletRequest request) {
         log.info("---------- removeToken ----------");
 
@@ -105,6 +108,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return "Removed!";
     }
 
+    @Override
     public String forgotPassword(String email) {
         log.info("---------- forgotPassword ----------");
 
@@ -124,6 +128,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return resetToken;
     }
 
+    @Override
     public String resetPassword(String secretKey) {
         log.info("---------- resetPassword ----------");
 
@@ -135,6 +140,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return "Reset";
     }
 
+    @Override
     public String changePassword(ResetPasswordDTO request) {
         log.info("---------- changePassword ----------");
 
@@ -148,6 +154,22 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         accountService.saveAccount(account);
 
         return "Changed";
+    }
+
+    @Override
+    public String logout(HttpServletRequest request) {
+        log.info("---------- logout ----------");
+
+        final String token = request.getHeader(REFERER);
+        if (StringUtils.isBlank(token)) {
+            throw new InvalidDataException("Token must be not blank");
+        }
+
+        final String userName = jwtService.extractUsername(token, ACCESS_TOKEN);
+
+        redisTokenService.remove(userName);
+
+        return "Logout";
     }
 
     private Account validateToken(String token) {

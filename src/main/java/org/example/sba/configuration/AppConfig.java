@@ -12,7 +12,6 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -29,18 +28,19 @@ public class AppConfig {
 
     private final AccountService accountService;
     private final PreFilter preFilter;
+    private final PasswordEncoder passwordEncoder; // Inject PasswordEncoder
 
-    private String[] WHITE_LIST = {"/auth/**"};
+    private String[] WHITE_LIST = {"/auth/**", "/account/register", "/account/confirm", "/account/login", "/account/forgot-password", "/account/reset-password", "/account/confirm"};
 
     @Bean
     public WebMvcConfigurer corsConfigurer() {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(@NonNull CorsRegistry registry) {
-                registry.addMapping("**")
-                        .allowedOrigins("*")
-                        .allowedMethods("GET", "POST", "PUT", "DELETE") // Allowed HTTP methods
-                        .allowedHeaders("*") // Allowed request headers
+                registry.addMapping("/**")
+                        .allowedOrigins("http://localhost:8500")
+                        .allowedMethods("GET", "POST", "PUT", "DELETE")
+                        .allowedHeaders("*")
                         .allowCredentials(false)
                         .maxAge(3600);
             }
@@ -48,16 +48,13 @@ public class AppConfig {
     }
 
     @Bean
-    public PasswordEncoder getPasswordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
-    @Bean
     public SecurityFilterChain configure(@NonNull HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(authorizeRequests -> authorizeRequests.requestMatchers(WHITE_LIST).permitAll().anyRequest().authenticated())
+                .authorizeHttpRequests(authorizeRequests ->
+                        authorizeRequests.requestMatchers(WHITE_LIST).permitAll().anyRequest().authenticated())
                 .sessionManagement(manager -> manager.sessionCreationPolicy(STATELESS))
-                .authenticationProvider(provider()).addFilterBefore(preFilter, UsernamePasswordAuthenticationFilter.class);
+                .authenticationProvider(provider())
+                .addFilterBefore(preFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 
@@ -77,8 +74,7 @@ public class AppConfig {
     public AuthenticationProvider provider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setUserDetailsService(accountService.accountDetailsService());
-        provider.setPasswordEncoder(getPasswordEncoder());
-
+        provider.setPasswordEncoder(passwordEncoder); // Use injected PasswordEncoder
         return provider;
     }
 }

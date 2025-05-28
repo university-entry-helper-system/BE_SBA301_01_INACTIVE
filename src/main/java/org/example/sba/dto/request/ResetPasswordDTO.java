@@ -1,9 +1,9 @@
 package org.example.sba.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
-import lombok.Getter;
+import lombok.Data;
 
-@Getter
+@Data
 public class ResetPasswordDTO {
 
     @NotBlank(message = "secretKey must be not blank")

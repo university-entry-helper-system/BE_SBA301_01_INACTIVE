@@ -2,12 +2,12 @@ package org.example.sba.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
+import lombok.Data;
 import org.example.sba.util.Platform;
 
 import java.io.Serializable;
 
-@Getter
+@Data
 public class SignInRequest implements Serializable {
 
     @NotBlank(message = "username must be not null")

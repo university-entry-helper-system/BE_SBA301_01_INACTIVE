@@ -6,8 +6,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.*;
 
-@Setter
-@Getter
+@Data
 @Entity
 @Builder
 @AllArgsConstructor

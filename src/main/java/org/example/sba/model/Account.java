@@ -1,23 +1,22 @@
 package org.example.sba.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.persistence.*;
 import lombok.*;
 
-import jakarta.persistence.*;
-import lombok.*;
 import org.example.sba.util.AccountStatus;
+import org.example.sba.util.EnumDeserializer;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.example.sba.util.Gender;
 
-
 import java.io.Serializable;
+import java.sql.Date;
 import java.util.*;
 
-@Getter
-@Setter
+@Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
@@ -32,11 +31,11 @@ public class Account extends AbstractEntity<Long> implements UserDetails, Serial
     private String lastName;
 
     @Column(name = "date_of_birth")
-    @Temporal(TemporalType.DATE)
     private Date dateOfBirth;
 
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @JsonDeserialize(using = EnumDeserializer.class)
     @Column(name = "gender")
     private Gender gender;
 
@@ -57,6 +56,7 @@ public class Account extends AbstractEntity<Long> implements UserDetails, Serial
 
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @JsonDeserialize(using = EnumDeserializer.class)
     @Column(name = "status")
     private AccountStatus status;
 

@@ -80,7 +80,7 @@ public class JwtServiceImpl implements JwtService {
                 .setClaims(claims)
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * expiryHour))
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * expiryHour))  // Expiry set for the access token
                 .signWith(getKey(ACCESS_TOKEN), SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -92,7 +92,7 @@ public class JwtServiceImpl implements JwtService {
                 .setClaims(claims)
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24 * expiryDay))
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24 * expiryDay))  // Expiry set for the refresh token
                 .signWith(getKey(REFRESH_TOKEN), SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -104,7 +104,7 @@ public class JwtServiceImpl implements JwtService {
                 .setClaims(claims)
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))  // Expiry set for reset token (shorter duration)
                 .signWith(getKey(RESET_TOKEN), SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -113,17 +113,18 @@ public class JwtServiceImpl implements JwtService {
         log.info("---------- getKey ----------");
         switch (type) {
             case ACCESS_TOKEN -> {
-                return Keys.hmacShaKeyFor(Decoders.BASE64.decode(accessKey));
+                return Keys.hmacShaKeyFor(Decoders.BASE64.decode(accessKey));  // Using base64 decoded keys
             }
             case REFRESH_TOKEN -> {
-                return Keys.hmacShaKeyFor(Decoders.BASE64.decode(refreshKey));
+                return Keys.hmacShaKeyFor(Decoders.BASE64.decode(refreshKey));  // Using base64 decoded keys
             }
             case RESET_TOKEN -> {
-                return Keys.hmacShaKeyFor(Decoders.BASE64.decode(resetKey));
+                return Keys.hmacShaKeyFor(Decoders.BASE64.decode(resetKey));  // Using base64 decoded keys
             }
             default -> throw new InvalidDataException("Invalid token type");
         }
     }
+
     private <T> T extractClaim(String token, TokenType type, Function<Claims, T> claimResolver) {
         final Claims claims = extraAllClaim(token, type);
         return claimResolver.apply(claims);

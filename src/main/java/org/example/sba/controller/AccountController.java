@@ -6,7 +6,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 import org.example.sba.configuration.Translator;
 import org.example.sba.dto.request.AccountRequestDTO;
 import org.example.sba.dto.response.AccountDetailResponse;
@@ -16,9 +15,11 @@ import org.example.sba.dto.response.ResponseError;
 import org.example.sba.service.AccountService;
 import org.example.sba.util.AccountStatus;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
 
 @RestController
 @RequestMapping("/account")
@@ -31,18 +32,36 @@ public class AccountController {
     private final AccountService accountService;
 
     @Operation(method = "POST", summary = "Add new account", description = "Create new account")
-    @PostMapping(value = "/")
-    public ResponseData<Long> Account(@Valid @RequestBody AccountRequestDTO request) {
+    @PostMapping(value = "/register")
+    public ResponseData<Long> createAccount(@Valid @RequestBody AccountRequestDTO request) {
         log.info("Request add account, {} {}", request.getFirstName(), request.getLastName());
         long accountId = accountService.saveAccount(request);
         return new ResponseData<>(HttpStatus.CREATED.value(), Translator.toLocale("account.add.success"), accountId);
+    }
+
+    @Operation(method = "POST", summary = "Add new admin", description = "Create new admin")
+    @PostMapping(value = "/admin")
+    public ResponseData<Long> createAdmin(@Valid @RequestBody AccountRequestDTO request) {
+        log.info("Request add admin, {} {}", request.getFirstName(), request.getLastName());
+        if (!SecurityContextHolder.getContext().getAuthentication().getAuthorities()
+                .contains(new SimpleGrantedAuthority("ROLE_ADMIN"))) {
+            throw new AccessDeniedException("You do not have permission to create an admin.");
+        }
+        long accountId = accountService.saveAdmin(request);
+        return new ResponseData<>(HttpStatus.CREATED.value(), Translator.toLocale("admin.add.success"), accountId);
     }
 
     @Operation(summary = "Update account", description = "Send a request via this API to update account")
     @PutMapping("/{accountId}")
     public ResponseData<?> updateAccount(@PathVariable @Min(1) long accountId, @Valid @RequestBody AccountRequestDTO request) {
         log.info("Request update accountId={}", accountId);
-
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        AccountDetailResponse account = accountService.getAccount(accountId);
+        if (!currentUsername.equals(account.getUsername()) &&
+                !SecurityContextHolder.getContext().getAuthentication().getAuthorities()
+                        .contains(new SimpleGrantedAuthority("ROLE_ADMIN"))) {
+            throw new AccessDeniedException("You do not have permission to update this account.");
+        }
         try {
             accountService.updateAccount(accountId, request);
             return new ResponseData<>(HttpStatus.ACCEPTED.value(), Translator.toLocale("account.upd.success"));
@@ -50,14 +69,16 @@ public class AccountController {
             log.error("errorMessage={}", e.getMessage(), e.getCause());
             return new ResponseError(HttpStatus.BAD_REQUEST.value(), "Update account fail");
         }
-
     }
 
     @Operation(summary = "Change status of account", description = "Send a request via this API to change status of account")
     @PatchMapping("/{accountId}")
-    public ResponseData<?> updateStatus(@Min(1) @PathVariable int accountId, @RequestParam AccountStatus status) {
+    public ResponseData<?> updateStatus(@Min(1) @PathVariable long accountId, @RequestParam AccountStatus status) {
         log.info("Request change status, accountId={}", accountId);
-
+        if (!SecurityContextHolder.getContext().getAuthentication().getAuthorities()
+                .contains(new SimpleGrantedAuthority("ROLE_ADMIN"))) {
+            throw new AccessDeniedException("You do not have permission to change account status.");
+        }
         try {
             accountService.changeStatus(accountId, status);
             return new ResponseData<>(HttpStatus.ACCEPTED.value(), Translator.toLocale("account.change.success"));
@@ -70,8 +91,11 @@ public class AccountController {
     @Operation(summary = "Delete account permanently", description = "Send a request via this API to delete account permanently")
     @DeleteMapping("/{accountId}")
     public ResponseData<?> deleteAccount(@PathVariable @Min(value = 1, message = "accountId must be greater than 0") long accountId) {
-        log.info("Request delete userId={}", accountId);
-
+        log.info("Request delete accountId={}", accountId);
+        if (!SecurityContextHolder.getContext().getAuthentication().getAuthorities()
+                .contains(new SimpleGrantedAuthority("ROLE_ADMIN"))) {
+            throw new AccessDeniedException("You do not have permission to delete an account.");
+        }
         try {
             accountService.deleteAccount(accountId);
             return new ResponseData<>(HttpStatus.NO_CONTENT.value(), Translator.toLocale("account.del.success"));
@@ -85,9 +109,14 @@ public class AccountController {
     @GetMapping("/{accountId}")
     public ResponseData<?> getAccount(@PathVariable @Min(1) long accountId) {
         log.info("Request get account detail, accountId={}", accountId);
-
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        AccountDetailResponse account = accountService.getAccount(accountId);
+        if (!currentUsername.equals(account.getUsername()) &&
+                !SecurityContextHolder.getContext().getAuthentication().getAuthorities()
+                        .contains(new SimpleGrantedAuthority("ROLE_ADMIN"))) {
+            throw new AccessDeniedException("You do not have permission to view this account.");
+        }
         try {
-            AccountDetailResponse account = accountService.getAccount(accountId);
             return new ResponseData<>(HttpStatus.OK.value(), "account", account);
         } catch (Exception e) {
             log.error("errorMessage={}", e.getMessage(), e.getCause());
@@ -98,13 +127,31 @@ public class AccountController {
     @Operation(summary = "Get list of accounts per pageNo", description = "Send a request via this API to get account list by pageNo and pageSize")
     @GetMapping("/list")
     public ResponseData<?> getAllAccounts(@RequestParam(defaultValue = "0", required = false) int pageNo,
-                                       @Min(10) @RequestParam(defaultValue = "20", required = false) int pageSize) {
+                                          @Min(10) @RequestParam(defaultValue = "20", required = false) int pageSize) {
+        if (!SecurityContextHolder.getContext().getAuthentication().getAuthorities()
+                .contains(new SimpleGrantedAuthority("ROLE_ADMIN"))) {
+            throw new AccessDeniedException("You do not have permission to view all accounts.");
+        }
         try {
             PageResponse<?> accounts = accountService.getAllAccounts(pageNo, pageSize);
             return new ResponseData<>(HttpStatus.OK.value(), "accounts", accounts);
         } catch (Exception e) {
             log.error("errorMessage={}", e.getMessage(), e.getCause());
             return new ResponseError(HttpStatus.BAD_REQUEST.value(), e.getMessage());
+        }
+    }
+
+    @Operation(summary = "Confirm email", description = "Confirm email")
+    @GetMapping("/confirm")
+    public ResponseData<String> confirmRegistration(@RequestParam String email) {
+        try {
+            accountService.confirmAccountByEmail(email);
+            return new ResponseData<>(HttpStatus.OK.value(),
+                    Translator.toLocale("account.confirm.success"),
+                    "Account successfully confirmed. You can now log in.");
+        } catch (Exception e) {
+            log.error("errorMessage={}", e.getMessage(), e.getCause());
+            return new ResponseError(HttpStatus.BAD_REQUEST.value(), "Email confirmation failed");
         }
     }
 }
