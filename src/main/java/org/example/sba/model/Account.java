@@ -1,31 +1,29 @@
 package org.example.sba.model;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 
-import org.apache.catalina.User;
+import jakarta.persistence.*;
+import lombok.*;
 import org.example.sba.util.AccountStatus;
-import org.example.sba.util.Gender;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.example.sba.util.Gender;
+
 
 import java.io.Serializable;
-import java.util.Date;
+import java.util.*;
 
 @Getter
 @Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Entity(name = "tbl_account")
+@Entity
+@Table(name = "tbl_account")
 public class Account extends AbstractEntity<Long> implements UserDetails, Serializable {
-    @Override
-    public java.util.Collection<? extends org.springframework.security.core.GrantedAuthority> getAuthorities() {
-        // You can customize this to return authorities based on the role or other logic
-        return java.util.Collections.emptyList();
-    }
 
     @Column(name = "first_name")
     private String firstName;
@@ -51,10 +49,8 @@ public class Account extends AbstractEntity<Long> implements UserDetails, Serial
     @Column(name = "username")
     private String username;
 
-    @ManyToOne
-    @JoinColumn(name = "role_id")
-    @JsonBackReference
-    private Role role;
+    @OneToMany(mappedBy = "account")
+    private Set<AccountHasRole> roles = new HashSet<>();
 
     @Column(name = "password")
     private String password;
@@ -63,4 +59,29 @@ public class Account extends AbstractEntity<Long> implements UserDetails, Serial
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "status")
     private AccountStatus status;
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of();
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
 }

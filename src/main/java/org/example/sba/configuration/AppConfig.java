@@ -18,19 +18,16 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import org.example.sba.service.impl.AccountServiceImpl;
-import org.example.sba.configuration.PreFilter;
+import org.example.sba.service.AccountService;
 
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
-
-import org.example.sba.service.AccountService;
 
 @Configuration
 @Profile("!prod")
 @RequiredArgsConstructor
 public class AppConfig {
 
-    private final AccountServiceImpl accountService;
+    private final AccountService accountService;
     private final PreFilter preFilter;
 
     private String[] WHITE_LIST = {"/auth/**"};
@@ -41,7 +38,7 @@ public class AppConfig {
             @Override
             public void addCorsMappings(@NonNull CorsRegistry registry) {
                 registry.addMapping("**")
-                        .allowedOrigins("http://localhost:8500")
+                        .allowedOrigins("*")
                         .allowedMethods("GET", "POST", "PUT", "DELETE") // Allowed HTTP methods
                         .allowedHeaders("*") // Allowed request headers
                         .allowCredentials(false)
@@ -79,7 +76,7 @@ public class AppConfig {
     @Bean
     public AuthenticationProvider provider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setUserDetailsService(accountService.accounDetailsService());
+        provider.setUserDetailsService(accountService.accountDetailsService());
         provider.setPasswordEncoder(getPasswordEncoder());
 
         return provider;

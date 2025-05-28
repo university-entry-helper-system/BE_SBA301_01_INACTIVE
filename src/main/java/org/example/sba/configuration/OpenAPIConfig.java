@@ -12,7 +12,6 @@ import org.springframework.context.annotation.Profile;
 
 import java.util.List;
 
-
 @Configuration
 @Profile("!prod")
 public class OpenAPIConfig {
@@ -21,7 +20,7 @@ public class OpenAPIConfig {
     public GroupedOpenApi publicApi(@Value("${openapi.service.api-docs}") String apiDocs) {
         return GroupedOpenApi.builder()
                 .group(apiDocs) // /v3/api-docs/api-service
-                .packagesToScan("org.example.sba.controller")
+                .packagesToScan("vn.tayjava.controller")
                 .build();
     }
 

@@ -1,6 +1,6 @@
 package org.example.sba.model;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -9,17 +9,21 @@ import lombok.*;
 import java.util.HashSet;
 import java.util.Set;
 
-@Getter
 @Setter
+@Getter
+@Entity
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Entity
-@Table(name = "tbl_role")
-public class Role extends AbstractEntity<Integer> {
+@Table(name = "tbl_permission")
+public class Permission extends AbstractEntity<Integer> {
+
+    @Column(name = "name")
     private String name;
+
+    @Column(name = "description")
     private String description;
 
-    @OneToMany(mappedBy = "role")
-    private Set<RoleHasPermission> roles = new HashSet<>();
+    @OneToMany(mappedBy = "permission")
+    private Set<RoleHasPermission> roleHasPermissions = new HashSet<>();
 }
