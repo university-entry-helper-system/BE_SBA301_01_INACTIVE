@@ -10,6 +10,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 import java.io.Serializable;
 import java.sql.Date;
+import java.time.Instant;
 
 @Data
 @Builder
@@ -18,11 +19,11 @@ import java.sql.Date;
 public class AccountRequestDTO implements Serializable {
 
     @NotBlank(message = "First name must not be blank")
-    @Size(max = 50, message = "First name must not exceed 50 characters")
+    @Size(min = 2, max = 50, message = "First name must be between 50 characters")
     private String firstName;
 
     @NotBlank(message = "Last name must not be blank")
-    @Size(max = 50, message = "Last name must not exceed 50 characters")
+    @Size(min = 2, max = 50, message = "Last name must be between 50 characters")
     private String lastName;
 
     @NotNull(message = "dateOfBirth must be not null")
@@ -46,6 +47,18 @@ public class AccountRequestDTO implements Serializable {
     private String username;
 
     @NotBlank(message = "Password must not be blank")
-    @Size(min = 8, message = "Password must be at least 8 characters")
+    @Size(min = 8, max = 20, message = "Password must be between 8 and 20 characters")
+    @Pattern(
+            regexp = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,20}$",
+            message = "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character"
+    )
     private String password;
+
+    String avatar;
+    String code;
+
+    Instant createDate;
+    String createdBy;
+    Instant updateDate;
+    String updatedBy;
 }

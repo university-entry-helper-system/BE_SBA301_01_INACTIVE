@@ -7,6 +7,7 @@ import org.example.sba.util.AccountStatus;
 
 import java.io.Serializable;
 import java.sql.Date;
+import java.time.Instant;
 
 @Builder
 @Getter
@@ -28,4 +29,13 @@ public class AccountDetailResponse implements Serializable {
     private String username;
 
     private AccountStatus status;
+
+    private String avatar;
+
+    private String code;
+
+    Instant createDate;
+    String createdBy;
+    Instant updateDate;
+    String updatedBy;
 }

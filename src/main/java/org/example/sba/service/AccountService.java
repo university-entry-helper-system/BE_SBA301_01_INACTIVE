@@ -12,7 +12,7 @@ import java.util.List;
 
 public interface AccountService {
 
-    long saveAccount(AccountRequestDTO request);
+    AccountDetailResponse saveAccount(AccountRequestDTO request);
 
     long saveAdmin(AccountRequestDTO request);
 

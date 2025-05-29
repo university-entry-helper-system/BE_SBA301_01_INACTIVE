@@ -1,6 +1,7 @@
 package org.example.sba.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import org.example.sba.util.AccountStatus;
@@ -12,6 +13,7 @@ import org.example.sba.util.Gender;
 
 import java.io.Serializable;
 import java.sql.Date;
+import java.time.Instant;
 import java.util.*;
 
 @Data
@@ -55,6 +57,27 @@ public class Account extends AbstractEntity<Long> implements UserDetails, Serial
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "status")
     private AccountStatus status;
+
+    @Lob
+    @Column(name = "avatar")
+    private String avatar;
+
+    @Column(name = "code")
+    private String code;
+
+    @Column(name = "created_date")
+    private Instant createdDate;
+
+    @Size(max = 50)
+    @Column(name = "created_by",  length = 50)
+    private String createdBy;
+
+    @Column(name = "updated_date")
+    private Instant updatedDate;
+
+    @Size(max = 50)
+    @Column(name = "updated_by", length = 50)
+    private String updatedBy;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

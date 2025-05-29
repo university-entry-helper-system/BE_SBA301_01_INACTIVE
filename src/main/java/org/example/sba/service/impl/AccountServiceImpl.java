@@ -26,7 +26,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -45,7 +47,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    public long saveAccount(AccountRequestDTO request) {
+    public AccountDetailResponse saveAccount(AccountRequestDTO request) {
         if (accountRepository.findByUsername(request.getUsername()).isPresent()) {
             throw new ResourceNotFoundException(Translator.toLocale("error.username.exist"));
         }
@@ -53,36 +55,59 @@ public class AccountServiceImpl implements AccountService {
             throw new ResourceNotFoundException(Translator.toLocale("error.email.exist"));
         }
 
-        // Create account with INACTIVE status
         Account account = Account.builder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .dateOfBirth(request.getDateOfBirth())
-                .gender(request.getGender()) // Now uses Gender enum
+                .gender(request.getGender())
                 .phone(request.getPhone())
                 .email(request.getEmail())
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .status(AccountStatus.INACTIVE) // Always INACTIVE for user registration
+                .status(AccountStatus.INACTIVE)
+                .createdDate(Instant.now())
+                .updatedDate(Instant.now())
+                .createdBy(request.getUsername())
+                .updatedBy(request.getUsername())
+                .avatar(request.getAvatar())
+                .code(generateCode())
                 .build();
 
-        accountRepository.save(account);
+        accountRepository.saveAndFlush(account);
 
-        Role userRole = roleRepository.findByName(USER_ROLE)
-                .orElseThrow(() -> new ResourceNotFoundException("User role not found"));
+        Role accountRole = roleRepository.findByName(USER_ROLE)
+                .orElseThrow(() -> new ResourceNotFoundException("Account role not found"));
 
         AccountHasRole accountHasRole = new AccountHasRole();
         accountHasRole.setAccount(account);
-        accountHasRole.setRole(userRole);
+        accountHasRole.setRole(accountRole);
 
         accountHasRoleRepository.save(accountHasRole);
 
-        // Send confirmation email
-        emailService.sendRegistrationConfirmationEmail(account);
+        emailService.sendRegistrationConfirmationEmail(account, account.getCode());
 
         log.info("Account created with id: {} and role: {}, status: INACTIVE, awaiting email confirmation",
                 account.getId(), USER_ROLE);
-        return account.getId();
+
+        return convertToAccountDetailResponse(account);
+    }
+
+    private String generateCode() {
+        return UUID.randomUUID().toString();
+    }
+
+    private AccountDetailResponse convertToAccountDetailResponse(Account account) {
+        return AccountDetailResponse.builder()
+                .id(account.getId())
+                .firstName(account.getFirstName())
+                .lastName(account.getLastName())
+                .dateOfBirth(account.getDateOfBirth())
+                .gender(account.getGender())
+                .phone(account.getPhone())
+                .email(account.getEmail())
+                .username(account.getUsername())
+                .status(account.getStatus())
+                .build();
     }
 
     @Override

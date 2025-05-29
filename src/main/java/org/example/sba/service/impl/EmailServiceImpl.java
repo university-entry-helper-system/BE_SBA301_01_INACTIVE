@@ -17,14 +17,21 @@ public class EmailServiceImpl implements EmailService {
 
     private final JavaMailSender mailSender;
 
-    public void sendRegistrationConfirmationEmail(Account account) {
+    public void sendRegistrationConfirmationEmail(Account account, String confirmationCode) {
         String subject = "Please Confirm Your Registration";
-        String body = "<html><body><h3>Hello " + account.getFirstName() + " " + account.getLastName() + ",</h3>" +
+
+        // Nội dung email với thông tin người dùng và mã xác nhận
+        String body = "<html><body>" +
+                "<h3>Hello " + account.getFirstName() + " " + account.getLastName() + ",</h3>" +
                 "<p>Thank you for registering with us. Please click the link below to confirm your registration:</p>" +
-                "<a href='http://localhost:8080/account/confirm?email=" + account.getEmail() + "'>Confirm Registration</a>" +
+                "<p><a href='http://localhost:8080/account/confirm?email=" + account.getEmail() +
+                "&code=" + confirmationCode + "'>Confirm Registration</a></p>" +
+                "<p>If you did not register for an account, please ignore this email.</p>" +
+                "<p>Best regards,<br>The Team</p>" +
                 "</body></html>";
 
         try {
+            // Tạo và cấu hình email
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true);
             helper.setTo(account.getEmail());
@@ -32,6 +39,7 @@ public class EmailServiceImpl implements EmailService {
             helper.setText(body, true); // HTML email
             mailSender.send(message);
         } catch (MailException | MessagingException e) {
+            // In ra lỗi và ném ngoại lệ nếu có vấn đề trong quá trình gửi email
             e.printStackTrace();
             throw new RuntimeException("Error sending confirmation email", e);
         }

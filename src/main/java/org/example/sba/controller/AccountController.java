@@ -33,9 +33,9 @@ public class AccountController {
 
     @Operation(method = "POST", summary = "Add new account", description = "Create new account")
     @PostMapping(value = "/register")
-    public ResponseData<Long> createAccount(@Valid @RequestBody AccountRequestDTO request) {
+    public ResponseData<AccountDetailResponse> createAccount(@Valid @RequestBody AccountRequestDTO request) {
         log.info("Request add account, {} {}", request.getFirstName(), request.getLastName());
-        long accountId = accountService.saveAccount(request);
+        AccountDetailResponse accountId = accountService.saveAccount(request);
         return new ResponseData<>(HttpStatus.CREATED.value(), Translator.toLocale("account.add.success"), accountId);
     }
 
