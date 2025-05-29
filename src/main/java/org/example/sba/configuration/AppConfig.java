@@ -30,7 +30,7 @@ public class AppConfig {
     private final PreFilter preFilter;
     private final PasswordEncoder passwordEncoder; // Inject PasswordEncoder
 
-    private String[] WHITE_LIST = {"/auth/**", "/account/register", "/account/confirm", "/account/login", "/account/forgot-password", "/account/reset-password", "/account/confirm"};
+    private String[] WHITE_LIST = {"/auth/**", "/redis/**", "/account/register", "/account/confirm", "/account/login", "/account/forgot-password", "/account/reset-password", "/account/confirm"};
 
     @Bean
     public WebMvcConfigurer corsConfigurer() {

@@ -14,7 +14,7 @@ public interface AccountService {
 
     AccountDetailResponse saveAccount(AccountRequestDTO request);
 
-    long saveAdmin(AccountRequestDTO request);
+    AccountDetailResponse saveAdmin(AccountRequestDTO request);
 
     long saveAccount(Account account);
 

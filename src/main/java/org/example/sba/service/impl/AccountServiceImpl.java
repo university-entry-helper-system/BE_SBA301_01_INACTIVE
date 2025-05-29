@@ -107,12 +107,17 @@ public class AccountServiceImpl implements AccountService {
                 .email(account.getEmail())
                 .username(account.getUsername())
                 .status(account.getStatus())
+                .avatar(account.getAvatar())
+                .createDate(Instant.now())
+                .createdBy(account.getUsername())
+                .updateDate(Instant.now())
+                .updatedBy(account.getUsername())
                 .build();
     }
 
     @Override
     @Transactional
-    public long saveAdmin(AccountRequestDTO request) {
+    public AccountDetailResponse saveAdmin(AccountRequestDTO request) {
         if (accountRepository.findByUsername(request.getUsername()).isPresent()) {
             throw new ResourceNotFoundException(Translator.toLocale("error.username.exist"));
         }
@@ -130,10 +135,15 @@ public class AccountServiceImpl implements AccountService {
                 .email(request.getEmail())
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .status(AccountStatus.ACTIVE) // Admin defaults to ACTIVE
+                .status(AccountStatus.ACTIVE)
+                .avatar(request.getAvatar())
+                .createdDate(Instant.now())
+                .createdBy(request.getUsername())
+                .updatedDate(Instant.now())
+                .updatedBy(request.getUsername())
                 .build();
 
-        accountRepository.save(account);
+        accountRepository.saveAndFlush(account);
 
         Role adminRole = roleRepository.findByName(ADMIN_ROLE)
                 .orElseThrow(() -> new ResourceNotFoundException("Admin role not found"));
@@ -144,9 +154,12 @@ public class AccountServiceImpl implements AccountService {
 
         accountHasRoleRepository.save(accountHasRole);
 
-        log.info("Admin created with id: {} and role: {}, status: ACTIVE",
+        emailService.sendRegistrationConfirmationEmail(account, account.getCode());
+
+        log.info("Account admin created with id: {} and role: {}, status: INACTIVE, awaiting email confirmation",
                 account.getId(), ADMIN_ROLE);
-        return account.getId();
+
+        return convertToAccountDetailResponse(account);
     }
 
     @Override

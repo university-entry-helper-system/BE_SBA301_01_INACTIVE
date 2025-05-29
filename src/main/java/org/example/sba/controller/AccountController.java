@@ -41,13 +41,13 @@ public class AccountController {
 
     @Operation(method = "POST", summary = "Add new admin", description = "Create new admin")
     @PostMapping(value = "/admin")
-    public ResponseData<Long> createAdmin(@Valid @RequestBody AccountRequestDTO request) {
+    public ResponseData<AccountDetailResponse> createAdmin(@Valid @RequestBody AccountRequestDTO request) {
         log.info("Request add admin, {} {}", request.getFirstName(), request.getLastName());
         if (!SecurityContextHolder.getContext().getAuthentication().getAuthorities()
                 .contains(new SimpleGrantedAuthority("ROLE_ADMIN"))) {
             throw new AccessDeniedException("You do not have permission to create an admin.");
         }
-        long accountId = accountService.saveAdmin(request);
+        AccountDetailResponse accountId = accountService.saveAdmin(request);
         return new ResponseData<>(HttpStatus.CREATED.value(), Translator.toLocale("admin.add.success"), accountId);
     }
 

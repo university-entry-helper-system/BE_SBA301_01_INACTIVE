@@ -4,10 +4,12 @@ import lombok.Builder;
 import lombok.Getter;
 import org.example.sba.util.Gender;
 import org.example.sba.util.AccountStatus;
+import org.example.sba.util.Role;
 
 import java.io.Serializable;
 import java.sql.Date;
 import java.time.Instant;
+import java.util.List;
 
 @Builder
 @Getter
@@ -31,8 +33,6 @@ public class AccountDetailResponse implements Serializable {
     private AccountStatus status;
 
     private String avatar;
-
-    private String code;
 
     Instant createDate;
     String createdBy;
