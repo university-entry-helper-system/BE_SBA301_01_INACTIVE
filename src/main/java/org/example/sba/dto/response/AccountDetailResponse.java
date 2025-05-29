@@ -1,9 +1,7 @@
 package org.example.sba.dto.response;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Builder;
 import lombok.Getter;
-import org.example.sba.util.CustomDateDeserializer;
 import org.example.sba.util.Gender;
 import org.example.sba.util.AccountStatus;
 
@@ -23,7 +21,6 @@ public class AccountDetailResponse implements Serializable {
 
     private String phone;
 
-    @JsonDeserialize(using = CustomDateDeserializer.class)
     private Date dateOfBirth;
 
     private Gender gender;

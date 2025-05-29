@@ -1,19 +1,21 @@
 package org.example.sba.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.validation.constraints.*;
 import lombok.*;
-import org.example.sba.util.CustomDateDeserializer;
+import org.example.sba.dto.validator.EnumPattern;
+import org.example.sba.dto.validator.PhoneNumber;
 import org.example.sba.util.Gender;
+import org.springframework.format.annotation.DateTimeFormat;
 
+import java.io.Serializable;
 import java.sql.Date;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class AccountRequestDTO {
+public class AccountRequestDTO implements Serializable {
 
     @NotBlank(message = "First name must not be blank")
     @Size(max = 50, message = "First name must not exceed 50 characters")
@@ -23,15 +25,16 @@ public class AccountRequestDTO {
     @Size(max = 50, message = "Last name must not exceed 50 characters")
     private String lastName;
 
-    @NotNull(message = "Date of birth must not be null")
-    @JsonFormat(pattern = "yyyy-MM-dd") // Ensure the date format is correctly parsed
-    @JsonDeserialize(using = CustomDateDeserializer.class)
+    @NotNull(message = "dateOfBirth must be not null")
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    @JsonFormat(pattern = "MM/dd/yyyy")
     private Date dateOfBirth;
 
     @NotNull(message = "Gender must not be null")
+    @EnumPattern(name = "gender", regexp = "MALE|FEMALE|OTHER")
     private Gender gender;
 
-    @Pattern(regexp = "^(\\+\\d{1,3})?\\d{9,12}$", message = "Invalid phone number")
+    @PhoneNumber
     private String phone;
 
     @NotBlank(message = "Email must not be blank")
