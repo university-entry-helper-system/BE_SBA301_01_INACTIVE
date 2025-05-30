@@ -6,13 +6,13 @@ import lombok.Data;
 @Data
 public class ResetPasswordDTO {
 
-    @NotBlank(message = "secretKey must be not blank")
+    @NotBlank(message = "secretKey must not be blank")
     private String secretKey;
 
-    @NotBlank(message = "password must be not blank")
+    @NotBlank(message = "password must not be blank")
     private String password;
 
-    @NotBlank(message = "confirmPassword must be not blank")
+    @NotBlank(message = "confirmPassword must not be blank")
     private String confirmPassword;
 
 }

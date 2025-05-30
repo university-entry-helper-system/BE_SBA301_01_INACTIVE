@@ -26,7 +26,7 @@ public class AccountRequestDTO implements Serializable {
     @Size(min = 2, max = 50, message = "Last name must be between 50 characters")
     private String lastName;
 
-    @NotNull(message = "dateOfBirth must be not null")
+    @NotNull(message = "dateOfBirth must not be blank")
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     @JsonFormat(pattern = "MM/dd/yyyy")
     private Date dateOfBirth;

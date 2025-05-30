@@ -10,13 +10,13 @@ import java.io.Serializable;
 @Data
 public class SignInRequest implements Serializable {
 
-    @NotBlank(message = "username must be not null")
+    @NotBlank(message = "username must not be blank")
     private String username;
 
-    @NotBlank(message = "password must be not blank")
+    @NotBlank(message = "password must not be blank")
     private String password;
 
-    @NotNull(message = "platform must be not null")
+    @NotNull(message = "platform must not be blank")
     private Platform platform;
 
     private String deviceToken;

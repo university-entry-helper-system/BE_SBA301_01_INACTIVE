@@ -9,9 +9,9 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>org.example</groupId>
-    <artifactId>SBA</artifactId>
+    <artifactId>backend-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>SBA</name>
+    <name>backend-service</name>
     <description>SBA</description>
     <url/>
     <licenses>
@@ -160,6 +160,7 @@
                 </configuration>
             </plugin>
         </plugins>
+        <finalName>backend-service</finalName>
     </build>
 
 </project>
