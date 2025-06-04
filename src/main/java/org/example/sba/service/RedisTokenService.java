@@ -1,12 +1,6 @@
 package org.example.sba.service;
 
-import org.example.sba.model.RedisToken;
-
 public interface RedisTokenService {
-
-    void save(RedisToken token);
-
-    void remove(String id);
-
-    boolean isExists(String id);
+    void saveActivationToken(String token, Long accountId, int expirationInSeconds);
+    Long getAccountIdFromActivationToken(String token);
 }

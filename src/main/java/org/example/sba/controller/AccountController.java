@@ -56,12 +56,18 @@ public class AccountController {
     public ResponseData<?> updateAccount(@PathVariable @Min(1) long accountId, @Valid @RequestBody AccountRequestDTO request) {
         log.info("Request update accountId={}", accountId);
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        var authorities = SecurityContextHolder.getContext().getAuthentication().getAuthorities();
+        boolean isAdmin = authorities.contains(new SimpleGrantedAuthority("ROLE_ADMIN"));
+        boolean isUser = authorities.contains(new SimpleGrantedAuthority("ROLE_USER"));
+
         AccountDetailResponse account = accountService.getAccount(accountId);
-        if (!currentUsername.equals(account.getUsername()) &&
-                !SecurityContextHolder.getContext().getAuthentication().getAuthorities()
-                        .contains(new SimpleGrantedAuthority("ROLE_ADMIN"))) {
+
+        // If user has ROLE_USER, they can only update their own account
+        // If user has ROLE_ADMIN, they can update any account
+        if (!isAdmin && (!isUser || !currentUsername.equals(account.getUsername()))) {
             throw new AccessDeniedException("You do not have permission to update this account.");
         }
+
         try {
             accountService.updateAccount(accountId, request);
             return new ResponseData<>(HttpStatus.ACCEPTED.value(), Translator.toLocale("account.upd.success"));
@@ -70,6 +76,7 @@ public class AccountController {
             return new ResponseError(HttpStatus.BAD_REQUEST.value(), "Update account fail");
         }
     }
+
 
     @Operation(summary = "Change status of account", description = "Send a request via this API to change status of account")
     @PatchMapping("/{accountId}")
@@ -110,12 +117,18 @@ public class AccountController {
     public ResponseData<?> getAccount(@PathVariable @Min(1) long accountId) {
         log.info("Request get account detail, accountId={}", accountId);
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        var authorities = SecurityContextHolder.getContext().getAuthentication().getAuthorities();
+        boolean isAdmin = authorities.contains(new SimpleGrantedAuthority("ROLE_ADMIN"));
+        boolean isUser = authorities.contains(new SimpleGrantedAuthority("ROLE_USER"));
+
         AccountDetailResponse account = accountService.getAccount(accountId);
-        if (!currentUsername.equals(account.getUsername()) &&
-                !SecurityContextHolder.getContext().getAuthentication().getAuthorities()
-                        .contains(new SimpleGrantedAuthority("ROLE_ADMIN"))) {
+
+        // If user has ROLE_USER, they can only access their own account
+        // If user has ROLE_ADMIN, they can access any account
+        if (!isAdmin && (!isUser || !currentUsername.equals(account.getUsername()))) {
             throw new AccessDeniedException("You do not have permission to view this account.");
         }
+
         try {
             return new ResponseData<>(HttpStatus.OK.value(), "account", account);
         } catch (Exception e) {

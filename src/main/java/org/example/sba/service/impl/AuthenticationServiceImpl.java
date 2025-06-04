@@ -6,6 +6,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.example.sba.command.*;
+import org.example.sba.query.*;
 import org.example.sba.dto.request.ResetPasswordDTO;
 import org.example.sba.model.Account;
 import org.example.sba.model.RedisToken;
@@ -37,6 +39,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final JwtService jwtService;
     private final RedisTokenService redisTokenService;
     private final PasswordEncoder passwordEncoder;
+    private final ChangePasswordCommandHandler changePasswordCommandHandler;
+    private final LogoutCommandHandler logoutCommandHandler;
+    private final ResetPasswordCommandHandler resetPasswordCommandHandler;
+    private final AccountInfoQueryHandler accountInfoQueryHandler;
+    private final TokenStatusQueryHandler tokenStatusQueryHandler;
 
     @Override
     public TokenResponse accessToken(SignInRequest signInRequest) {
@@ -55,7 +62,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(signInRequest.getUsername(), signInRequest.getPassword(), authorities));
 
         String accessToken = jwtService.generateToken(account);
-
         String refreshToken = jwtService.generateRefreshToken(account);
 
         redisTokenService.save(RedisToken.builder().id(account.getUsername()).accessToken(accessToken).refreshToken(refreshToken).build());
@@ -129,30 +135,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public String resetPassword(String secretKey) {
-        log.info("---------- resetPassword ----------");
-
-        var account = validateToken(secretKey);
-
-        // check token by username
-        tokenService.getTokenByUsername(account.getUsername());
-
-        return "Reset";
-    }
-
-    @Override
     public String changePassword(ResetPasswordDTO request) {
         log.info("---------- changePassword ----------");
 
-        if (!request.getPassword().equals(request.getConfirmPassword())) {
-            throw new InvalidDataException("Passwords do not match");
-        }
-
-        var account = validateToken(request.getSecretKey());
-
-        account.setPassword(passwordEncoder.encode(request.getPassword()));
-        accountService.saveAccount(account);
-
+        ChangePasswordCommand command = new ChangePasswordCommand();
+        command.setUsername(request.getUsername());
+        command.setOldPassword(request.getOldPassword());
+        command.setNewPassword(request.getNewPassword());
+        changePasswordCommandHandler.handle(command);
         return "Changed";
     }
 
@@ -160,16 +150,22 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     public String logout(HttpServletRequest request) {
         log.info("---------- logout ----------");
 
-        final String token = request.getHeader(REFERER);
-        if (StringUtils.isBlank(token)) {
-            throw new InvalidDataException("Token must be not blank");
-        }
-
-        final String userName = jwtService.extractUsername(token, ACCESS_TOKEN);
-
-        redisTokenService.remove(userName);
-
+        LogoutCommand command = new LogoutCommand();
+        command.setUsername(request.getHeader("username"));
+        logoutCommandHandler.handle(command);
         return "Logout";
+    }
+
+    @Override
+    public String resetPassword(String secretKey) {
+        log.info("---------- resetPassword ----------");
+
+        ResetPasswordCommand command = new ResetPasswordCommand();
+        command.setUsername(secretKey);
+        command.setResetToken(secretKey);
+        command.setNewPassword("newPassword");
+        resetPasswordCommandHandler.handle(command);
+        return "Reset";
     }
 
     private Account validateToken(String token) {

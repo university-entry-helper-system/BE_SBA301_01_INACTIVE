@@ -15,4 +15,8 @@ public class ResetPasswordDTO {
     @NotBlank(message = "confirmPassword must not be blank")
     private String confirmPassword;
 
+    private String username;
+    private String oldPassword;
+    private String newPassword;
+
 }
