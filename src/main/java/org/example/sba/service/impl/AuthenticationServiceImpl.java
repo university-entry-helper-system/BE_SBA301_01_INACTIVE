@@ -64,7 +64,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         String accessToken = jwtService.generateToken(account);
         String refreshToken = jwtService.generateRefreshToken(account);
 
-        redisTokenService.save(RedisToken.builder().id(account.getUsername()).accessToken(accessToken).refreshToken(refreshToken).build());
+        redisTokenService.saveActivationToken(accessToken, account.getId(), 24 * 60 * 60);
 
         return TokenResponse.builder()
                 .accessToken(accessToken)
@@ -89,7 +89,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         String accessToken = jwtService.generateToken(account);
 
-        redisTokenService.save(RedisToken.builder().id(account.getUsername()).accessToken(accessToken).refreshToken(refreshToken).build());
+        redisTokenService.saveActivationToken(accessToken, account.getId(), 24 * 60 * 60);
 
         return TokenResponse.builder()
                 .accessToken(accessToken)
@@ -122,7 +122,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         String resetToken = jwtService.generateResetToken(account);
 
-        redisTokenService.save(RedisToken.builder().id(account.getUsername()).resetToken(resetToken).build());
+        redisTokenService.saveActivationToken(resetToken, account.getId(), 24 * 60 * 60);
 
         // TODO send email to account
         String confirmLink = String.format("curl --location 'http://localhost:80/auth/reset-password' \\\n" +

@@ -3,7 +3,6 @@ package org.example.sba.command;
 import lombok.RequiredArgsConstructor;
 import org.example.sba.dto.response.TokenResponse;
 import org.example.sba.model.Account;
-import org.example.sba.model.RedisToken;
 import org.example.sba.model.Role;
 import org.example.sba.repository.AccountRepository;
 import org.example.sba.service.JwtService;
@@ -44,11 +43,7 @@ public class SignInCommandHandler {
         String accessToken = jwtService.generateToken(account);
         String refreshToken = jwtService.generateRefreshToken(account);
 
-        redisTokenService.save(RedisToken.builder()
-                .id(account.getUsername())
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .build());
+        redisTokenService.saveActivationToken(accessToken, account.getId(), 24 * 60 * 60);
 
         return TokenResponse.builder()
                 .accessToken(accessToken)

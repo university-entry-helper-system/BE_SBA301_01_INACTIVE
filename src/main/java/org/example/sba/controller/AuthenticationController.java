@@ -1,5 +1,6 @@
 package org.example.sba.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -27,7 +28,7 @@ import java.util.Map;
 @Slf4j
 @RestController
 @RequestMapping("/auth")
-@Tag(name = "Authentication Controller")
+@Tag(name = "Authentication Controller", description = "APIs for user authentication and authorization")
 @RequiredArgsConstructor
 public class AuthenticationController {
 
@@ -42,6 +43,10 @@ public class AuthenticationController {
     private final RedisTokenService redisTokenService;
     private final AccountRepository accountRepository;
 
+    @Operation(
+        summary = "Register new user",
+        description = "Register a new user account with validation. The user will receive a confirmation email."
+    )
     @PostMapping("/register")
     public ResponseEntity<Map<String, Object>> register(@Valid @RequestBody RegisterCommand command, BindingResult bindingResult) {
         log.info("Received registration request for username: {}", command.getUsername());
@@ -61,6 +66,10 @@ public class AuthenticationController {
         }
     }
 
+    @Operation(
+        summary = "User login",
+        description = "Authenticate user and return JWT access token and refresh token. The access token is valid for 24 hours."
+    )
     @PostMapping("/access-token")
     public ResponseEntity<ResponseData<TokenResponse>> accessToken(@Valid @RequestBody SignInRequest request) {
         try {
@@ -81,6 +90,10 @@ public class AuthenticationController {
         }
     }
 
+    @Operation(
+        summary = "Refresh access token",
+        description = "Generate a new access token using a valid refresh token. The refresh token is valid for 7 days."
+    )
     @PostMapping("/refresh-token")
     public ResponseEntity<ResponseData<TokenResponse>> refreshToken(@RequestHeader("refresh-token") String refreshToken) {
         try {
@@ -100,6 +113,10 @@ public class AuthenticationController {
         }
     }
 
+    @Operation(
+        summary = "Change password",
+        description = "Change user password. Requires old password for verification and new password must meet security requirements."
+    )
     @PostMapping("/change-password")
     public ResponseEntity<ResponseData<String>> changePassword(@Valid @RequestBody ResetPasswordDTO request) {
         try {
@@ -121,6 +138,10 @@ public class AuthenticationController {
         }
     }
 
+    @Operation(
+        summary = "User logout",
+        description = "Logout user and invalidate their tokens. Requires valid access token in Authorization header."
+    )
     @PostMapping("/logout")
     public ResponseEntity<ResponseData<String>> logout(HttpServletRequest request) {
         try {

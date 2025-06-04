@@ -29,4 +29,16 @@ public class RedisTokenServiceImpl implements RedisTokenService {
         }
         return null;
     }
+
+    @Override
+    public void remove(String token) {
+        String key = ACTIVATION_TOKEN_PREFIX + token;
+        redisTemplate.delete(key);
+    }
+
+    @Override
+    public boolean isExists(String token) {
+        String key = ACTIVATION_TOKEN_PREFIX + token;
+        return Boolean.TRUE.equals(redisTemplate.hasKey(key));
+    }
 }

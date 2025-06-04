@@ -49,16 +49,19 @@ public class AppConfig {
     }
 
     @Bean
-    public SecurityFilterChain configure(@NonNull HttpSecurity http) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(authorizeRequests ->
-                        authorizeRequests
-                                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Cho phép tất cả yêu cầu OPTIONS
-                                .requestMatchers(WHITE_LIST).permitAll()
-                                .anyRequest().authenticated())
-                .sessionManagement(manager -> manager.sessionCreationPolicy(STATELESS))
-                .authenticationProvider(provider())
-                .addFilterBefore(preFilter, UsernamePasswordAuthenticationFilter.class);
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .csrf(AbstractHttpConfigurer::disable)
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/auth/register", "/auth/access-token", "/auth/refresh-token", 
+                               "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                .anyRequest().authenticated()
+            )
+            .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
+            .authenticationProvider(provider())
+            .addFilterBefore(preFilter, UsernamePasswordAuthenticationFilter.class)
+            .httpBasic(basic -> {}); // Enable Basic Auth
+
         return http.build();
     }
 

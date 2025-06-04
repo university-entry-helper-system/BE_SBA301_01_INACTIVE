@@ -5,6 +5,7 @@ import org.example.sba.model.Account;
 import org.example.sba.service.EmailService;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.mail.MailException;
 

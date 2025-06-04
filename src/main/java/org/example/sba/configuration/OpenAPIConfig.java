@@ -6,6 +6,9 @@ import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.servers.Server;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.OAuthFlows;
+import io.swagger.v3.oas.models.security.OAuthFlow;
+import io.swagger.v3.oas.models.security.Scopes;
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -38,12 +41,17 @@ public class OpenAPIConfig {
                         .description("API documents")
                         .version(version)
                         .license(new License().name("Apache 2.0").url("https://springdoc.org")))
-                .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
+                .addSecurityItem(new SecurityRequirement().addList("oauth2"))
                 .components(new io.swagger.v3.oas.models.Components()
-                        .addSecuritySchemes("bearerAuth", new SecurityScheme()
-                                .name("Authorization")
-                                .type(SecurityScheme.Type.HTTP)
-                                .scheme("bearer")
-                                .bearerFormat("JWT")));
+                        .addSecuritySchemes("oauth2", new SecurityScheme()
+                                .type(SecurityScheme.Type.OAUTH2)
+                                .flows(new OAuthFlows()
+                                    .password(new OAuthFlow()
+                                        .tokenUrl("http://localhost:8080/oauth/token")
+                                        .scopes(new Scopes().addString("read", "read access").addString("write", "write access"))
+                                    )
+                                )
+                        )
+                );
     }
 }
