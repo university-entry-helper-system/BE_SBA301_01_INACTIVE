@@ -1,4 +1,4 @@
-package org.example.sba.command;
+package org.example.sba.modules.auth;
 
 import lombok.Data;
 
@@ -6,5 +6,4 @@ import lombok.Data;
 public class SignInCommand {
     private String username;
     private String password;
-    // Thêm các trường khác nếu cần
 } 

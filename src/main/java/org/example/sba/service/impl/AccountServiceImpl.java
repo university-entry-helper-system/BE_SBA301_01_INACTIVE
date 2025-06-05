@@ -21,7 +21,6 @@ import org.example.sba.service.EmailService;
 import org.example.sba.util.AccountStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -125,7 +124,6 @@ public class AccountServiceImpl implements AccountService {
             throw new ResourceNotFoundException(Translator.toLocale("error.email.exist"));
         }
 
-        // Create admin account with ACTIVE status
         Account account = Account.builder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
@@ -168,15 +166,13 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public UserDetailsService accountDetailsService() {
-        return username -> {
-            Account account = accountRepository.findByUsername(username)
-                    .orElseThrow(() -> new UsernameNotFoundException("Account not found"));
-            if (account.getStatus() != AccountStatus.ACTIVE) {
-                throw new RuntimeException("Account is not active. Please confirm your email.");
-            }
-            return account;
-        };
+    public Account loadUserByUsername(String username) throws UsernameNotFoundException {
+        Account account = accountRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Account not found"));
+        if (account.getStatus() != AccountStatus.ACTIVE) {
+            throw new RuntimeException("Account is not active. Please confirm your email.");
+        }
+        return account;
     }
 
     @Override
@@ -190,7 +186,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public Account getAccountByEmail(String email) {
+    public Account getByEmail(String email) {
         return accountRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException(Translator.toLocale("error.email.not.found")));
     }
@@ -221,7 +217,6 @@ public class AccountServiceImpl implements AccountService {
         account.setEmail(request.getEmail());
         account.setUsername(request.getUsername());
         account.setPassword(passwordEncoder.encode(request.getPassword()));
-        // Status is not updated here; use changeStatus for status updates
         accountRepository.save(account);
 
         log.info("Account updated successfully, accountId={}", accountId);
@@ -249,34 +244,15 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public AccountDetailResponse getAccount(long accountId) {
         Account account = getAccountById(accountId);
-        return AccountDetailResponse.builder()
-                .id(accountId)
-                .firstName(account.getFirstName())
-                .lastName(account.getLastName())
-                .dateOfBirth(account.getDateOfBirth())
-                .gender(account.getGender())
-                .phone(account.getPhone())
-                .email(account.getEmail())
-                .username(account.getUsername())
-                .status(account.getStatus())
-                .build();
+        return convertToAccountDetailResponse(account);
     }
 
     @Override
     public PageResponse<?> getAllAccounts(int pageNo, int pageSize) {
         Page<Account> page = accountRepository.findAll(PageRequest.of(pageNo, pageSize));
 
-        List<AccountDetailResponse> list = page.stream().map(user -> AccountDetailResponse.builder()
-                        .id(user.getId())
-                        .firstName(user.getFirstName())
-                        .lastName(user.getLastName())
-                        .dateOfBirth(user.getDateOfBirth())
-                        .gender(user.getGender())
-                        .phone(user.getPhone())
-                        .email(user.getEmail())
-                        .username(user.getUsername())
-                        .status(user.getStatus())
-                        .build())
+        List<AccountDetailResponse> list = page.stream()
+                .map(this::convertToAccountDetailResponse)
                 .toList();
 
         return PageResponse.builder()
@@ -304,5 +280,10 @@ public class AccountServiceImpl implements AccountService {
         account.setStatus(AccountStatus.ACTIVE);
         accountRepository.save(account);
         log.info("Account with email updated successfully, email={}", email);
+    }
+
+    @Override
+    public Account save(Account account) {
+        return accountRepository.save(account);
     }
 }

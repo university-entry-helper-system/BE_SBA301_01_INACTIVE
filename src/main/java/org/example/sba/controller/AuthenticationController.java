@@ -6,21 +6,24 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.*;
-import org.example.sba.command.*;
-import org.example.sba.query.*;
+import org.example.sba.modules.auth.SignInCommand;
+import org.example.sba.modules.auth.RegisterCommand;
+import org.example.sba.dto.request.ChangePasswordDTO;
 import org.example.sba.dto.request.ResetPasswordDTO;
 import org.example.sba.dto.request.SignInRequest;
 import org.example.sba.dto.response.ResponseData;
 import org.example.sba.dto.response.ResponseError;
 import org.example.sba.dto.response.TokenResponse;
-import org.springframework.http.HttpStatus;
 import org.example.sba.model.Account;
+import org.example.sba.service.AuthenticationService;
+import org.example.sba.service.JwtService;
 import org.example.sba.service.RedisTokenService;
 import org.example.sba.repository.AccountRepository;
 import org.example.sba.util.AccountStatus;
+import org.example.sba.util.TokenType;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,27 +34,19 @@ import java.util.Map;
 @Tag(name = "Authentication Controller", description = "APIs for user authentication and authorization")
 @RequiredArgsConstructor
 public class AuthenticationController {
-
-    private final SignInCommandHandler signInCommandHandler;
-    private final RegisterCommandHandler registerCommandHandler;
-    private final RefreshTokenCommandHandler refreshTokenCommandHandler;
-    private final ChangePasswordCommandHandler changePasswordCommandHandler;
-    private final LogoutCommandHandler logoutCommandHandler;
-    private final ResetPasswordCommandHandler resetPasswordCommandHandler;
-    private final AccountInfoQueryHandler accountInfoQueryHandler;
-    private final TokenStatusQueryHandler tokenStatusQueryHandler;
-    private final RedisTokenService redisTokenService;
+    private final AuthenticationService authenticationService;
+    private final JwtService jwtService;
     private final AccountRepository accountRepository;
+    private final RedisTokenService redisTokenService;
 
     @Operation(
         summary = "Register new user",
-        description = "Register a new user account with validation. The user will receive a confirmation email."
+        description = "Register a new user account. The user will receive a confirmation email."
     )
     @PostMapping("/register")
-    public ResponseEntity<Map<String, Object>> register(@Valid @RequestBody RegisterCommand command, BindingResult bindingResult) {
-        log.info("Received registration request for username: {}", command.getUsername());
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterCommand command) {
         try {
-            Account account = registerCommandHandler.handle(command, bindingResult);
+            Account account = authenticationService.register(command);
             Map<String, Object> response = new HashMap<>();
             response.put("status", 200);
             response.put("message", "Registration successful");
@@ -68,150 +63,129 @@ public class AuthenticationController {
 
     @Operation(
         summary = "User login",
-        description = "Authenticate user and return JWT access token and refresh token. The access token is valid for 24 hours."
+        description = "Authenticate user and return JWT access and refresh tokens."
     )
     @PostMapping("/access-token")
-    public ResponseEntity<ResponseData<TokenResponse>> accessToken(@Valid @RequestBody SignInRequest request) {
+    public ResponseEntity<?> accessToken(@Valid @RequestBody SignInRequest request) {
         try {
             SignInCommand command = new SignInCommand();
             command.setUsername(request.getUsername());
             command.setPassword(request.getPassword());
-            TokenResponse tokenResponse = signInCommandHandler.handle(command);
-            return new ResponseEntity<>(
-                    new ResponseData<>(HttpStatus.OK.value(), "Login successful", tokenResponse),
-                    HttpStatus.OK
-            );
+            TokenResponse tokenResponse = authenticationService.login(command);
+            return ResponseEntity.ok(new ResponseData<>(HttpStatus.OK.value(), "Login successful", tokenResponse));
         } catch (Exception e) {
             log.error("errorMessage={}", e.getMessage(), e.getCause());
-            return new ResponseEntity<>(
-                    new ResponseError(HttpStatus.BAD_REQUEST.value(), "Login failed"),
-                    HttpStatus.BAD_REQUEST
-            );
-        }
-    }
-
-    @Operation(
-        summary = "Refresh access token",
-        description = "Generate a new access token using a valid refresh token. The refresh token is valid for 7 days."
-    )
-    @PostMapping("/refresh-token")
-    public ResponseEntity<ResponseData<TokenResponse>> refreshToken(@RequestHeader("refresh-token") String refreshToken) {
-        try {
-            RefreshTokenCommand command = new RefreshTokenCommand();
-            command.setRefreshToken(refreshToken);
-            TokenResponse tokenResponse = refreshTokenCommandHandler.handle(command);
-            return new ResponseEntity<>(
-                    new ResponseData<>(HttpStatus.OK.value(), "Token refreshed", tokenResponse),
-                    HttpStatus.OK
-            );
-        } catch (Exception e) {
-            log.error("errorMessage={}", e.getMessage(), e.getCause());
-            return new ResponseEntity<>(
-                    new ResponseError(HttpStatus.BAD_REQUEST.value(), "Token refresh failed"),
-                    HttpStatus.BAD_REQUEST
-            );
+            return ResponseEntity.badRequest().body(new ResponseData<>(HttpStatus.BAD_REQUEST.value(), "Login failed", null));
         }
     }
 
     @Operation(
         summary = "Change password",
-        description = "Change user password. Requires old password for verification and new password must meet security requirements."
+        description = "Change the password for a logged-in user. Requires old and new passwords."
     )
     @PostMapping("/change-password")
-    public ResponseEntity<ResponseData<String>> changePassword(@Valid @RequestBody ResetPasswordDTO request) {
+    public ResponseEntity<?> changePassword(@Valid @RequestBody ChangePasswordDTO request) {
         try {
-            ChangePasswordCommand command = new ChangePasswordCommand();
-            command.setUsername(request.getUsername());
-            command.setOldPassword(request.getOldPassword());
-            command.setNewPassword(request.getNewPassword());
-            changePasswordCommandHandler.handle(command);
-            return new ResponseEntity<>(
-                    new ResponseData<>(HttpStatus.OK.value(), "Password changed successfully", "Changed"),
-                    HttpStatus.OK
-            );
+            String result = authenticationService.changePassword(request);
+            return ResponseEntity.ok(new ResponseData<>(HttpStatus.OK.value(), result, null));
         } catch (Exception e) {
             log.error("errorMessage={}", e.getMessage(), e.getCause());
-            return new ResponseEntity<>(
-                    new ResponseError(HttpStatus.BAD_REQUEST.value(), "Password change failed"),
-                    HttpStatus.BAD_REQUEST
-            );
+            return ResponseEntity.badRequest().body(new ResponseError(HttpStatus.BAD_REQUEST.value(), "Password change failed: " + e.getMessage()));
         }
     }
 
     @Operation(
         summary = "User logout",
-        description = "Logout user and invalidate their tokens. Requires valid access token in Authorization header."
+        description = "Logout the user and invalidate their tokens. Requires a valid access token."
     )
     @PostMapping("/logout")
-    public ResponseEntity<ResponseData<String>> logout(HttpServletRequest request) {
+    public ResponseEntity<?> logout(HttpServletRequest request) {
         try {
-            LogoutCommand command = new LogoutCommand();
-            command.setUsername(request.getHeader("username"));
-            logoutCommandHandler.handle(command);
-            return new ResponseEntity<>(
-                    new ResponseData<>(HttpStatus.OK.value(), "Logout successful", "Logout"),
-                    HttpStatus.OK
-            );
+            String username = request.getUserPrincipal() != null ? request.getUserPrincipal().getName() : null;
+            if (username == null) throw new RuntimeException("Cannot resolve username from request");
+            String result = authenticationService.logout(username);
+            return ResponseEntity.ok(new ResponseData<>(HttpStatus.OK.value(), result, null));
         } catch (Exception e) {
             log.error("errorMessage={}", e.getMessage(), e.getCause());
-            return new ResponseEntity<>(
-                    new ResponseError(HttpStatus.BAD_REQUEST.value(), "Logout failed"),
-                    HttpStatus.BAD_REQUEST
-            );
+            return ResponseEntity.badRequest().body(new ResponseError(HttpStatus.BAD_REQUEST.value(), "Logout failed: " + e.getMessage()));
         }
     }
 
+    @Operation(
+        summary = "Forgot password",
+        description = "Send a password reset link to the user's email if the account exists."
+    )
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestParam String email) {
+        log.info("Received forgot password request for email: {}", email);
+        try {
+            String result = authenticationService.forgotPassword(email);
+            return ResponseEntity.ok(new ResponseData<>(HttpStatus.OK.value(), result, null));
+        } catch (Exception e) {
+            log.error("Forgot password failed: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(new ResponseError(HttpStatus.BAD_REQUEST.value(), "Forgot password failed: " + e.getMessage()));
+        }
+    }
+
+    @Operation(
+        summary = "Reset password",
+        description = "Reset the user's password using a token received via email."
+    )
     @PostMapping("/reset-password")
-    public ResponseEntity<ResponseData<String>> resetPassword(@RequestParam String secretKey) {
+    public ResponseEntity<?> resetPassword(@Valid @RequestBody ResetPasswordDTO request) {
         try {
-            ResetPasswordCommand command = new ResetPasswordCommand();
-            command.setUsername(secretKey);
-            command.setResetToken(secretKey);
-            command.setNewPassword("newPassword");
-            resetPasswordCommandHandler.handle(command);
-            return new ResponseEntity<>(
-                    new ResponseData<>(HttpStatus.OK.value(), "Password reset successful", "Reset"),
-                    HttpStatus.OK
-            );
+            String result = authenticationService.resetPassword(request);
+            return ResponseEntity.ok(new ResponseData<>(HttpStatus.OK.value(), result, null));
         } catch (Exception e) {
             log.error("errorMessage={}", e.getMessage(), e.getCause());
-            return new ResponseEntity<>(
-                    new ResponseError(HttpStatus.BAD_REQUEST.value(), "Password reset failed"),
-                    HttpStatus.BAD_REQUEST
-            );
+            return ResponseEntity.badRequest().body(new ResponseError(HttpStatus.BAD_REQUEST.value(), "Password reset failed: " + e.getMessage()));
         }
     }
 
+    @Operation(
+            summary = "Activate account",
+            description = "Activate a user account using the activation token sent to their email."
+    )
     @GetMapping("/activate")
-    public ResponseEntity<Map<String, Object>> activateAccount(@RequestParam String token) {
+    public ResponseEntity<ResponseData> activateAccount(@RequestParam String token) {
         log.info("Received account activation request with token: {}", token);
         try {
+            log.info("Extracting username from token...");
+            String username = jwtService.extractUsername(token, TokenType.ACTIVATION_TOKEN);
+            log.info("Username extracted: {}", username);
+            
+            log.info("Looking up account in database...");
+            Account account = accountRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("Account not found"));
+            log.info("Account found: {}", account.getUsername());
+            
+            log.info("Checking if token exists in Redis...");
             Long accountId = redisTokenService.getAccountIdFromActivationToken(token);
             if (accountId == null) {
-                log.error("Invalid or expired activation token");
-                Map<String, Object> response = new HashMap<>();
-                response.put("status", 400);
-                response.put("message", "Invalid or expired activation token");
-                return ResponseEntity.badRequest().body(response);
+                log.error("Token not found in Redis");
+                return ResponseEntity.badRequest().body(new ResponseData<>(400, "Activation failed: Invalid or expired token", null));
             }
-
-            Account account = accountRepository.findById(accountId)
-                    .orElseThrow(() -> new RuntimeException("Account not found"));
-
+            log.info("Token found in Redis for account ID: {}", accountId);
+            
+            if (!accountId.equals(account.getId())) {
+                log.error("Token account ID mismatch. Token account ID: {}, Found account ID: {}", accountId, account.getId());
+                return ResponseEntity.badRequest().body(new ResponseData<>(400, "Activation failed: Token account mismatch", null));
+            }
+            
+            log.info("Setting account status to ACTIVE...");
             account.setStatus(AccountStatus.ACTIVE);
             accountRepository.save(account);
-
-            log.info("Account activated successfully: {}", account.getUsername());
-            Map<String, Object> response = new HashMap<>();
-            response.put("status", 200);
-            response.put("message", "Account activated successfully");
-            return ResponseEntity.ok(response);
+            log.info("Account activated successfully");
+            
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("username", account.getUsername());
+            responseData.put("email", account.getEmail());
+            responseData.put("status", account.getStatus());
+            
+            return ResponseEntity.ok(new ResponseData<>(200, "Account activated successfully", responseData));
         } catch (Exception e) {
-            log.error("Account activation failed: {}", e.getMessage());
-            Map<String, Object> response = new HashMap<>();
-            response.put("status", 400);
-            response.put("message", "Account activation failed: " + e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            log.error("Activation failed: {}", e.getMessage(), e);
+            return ResponseEntity.badRequest().body(new ResponseData<>(400, "Activation failed: " + e.getMessage(), null));
         }
     }
 }

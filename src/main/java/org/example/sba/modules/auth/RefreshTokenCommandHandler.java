@@ -1,4 +1,4 @@
-package org.example.sba.command;
+package org.example.sba.modules.auth;
 
 import lombok.RequiredArgsConstructor;
 import org.example.sba.dto.response.TokenResponse;

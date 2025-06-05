@@ -10,11 +10,13 @@ import org.hibernate.type.SqlTypes;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.example.sba.util.Gender;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.io.Serializable;
 import java.sql.Date;
 import java.time.Instant;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Data
 @Builder
@@ -47,7 +49,8 @@ public class Account extends AbstractEntity<Long> implements UserDetails, Serial
     @Column(name = "username")
     private String username;
 
-    @OneToMany(mappedBy = "account")
+    @OneToMany(mappedBy = "account", fetch = FetchType.LAZY)
+    @ToString.Exclude
     private Set<AccountHasRole> roles = new HashSet<>();
 
     @Column(name = "password")
@@ -58,11 +61,10 @@ public class Account extends AbstractEntity<Long> implements UserDetails, Serial
     @Column(name = "status")
     private AccountStatus status;
 
-    @Lob
-    @Column(name = "avatar")
+    @Column(name = "avatar", nullable = true)
     private String avatar;
 
-    @Column(name = "code")
+    @Column(name = "code", nullable = true)
     private String code;
 
     @Column(name = "created_date")
@@ -81,7 +83,7 @@ public class Account extends AbstractEntity<Long> implements UserDetails, Serial
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of();
+        return List.of(new SimpleGrantedAuthority("ROLE_USER"));
     }
 
     @Override
@@ -104,3 +106,4 @@ public class Account extends AbstractEntity<Long> implements UserDetails, Serial
         return true;
     }
 }
+

@@ -8,8 +8,12 @@ import org.example.sba.dto.validator.PasswordMatch;
 
 @Data
 @PasswordMatch(message = "New password and confirm password must match")
-public class ResetPasswordDTO {
-    private String resetToken;
+public class ChangePasswordDTO {
+    @NotBlank(message = "Username is required")
+    private String username;
+
+    @NotBlank(message = "Old password is required")
+    private String oldPassword;
 
     @NotBlank(message = "New password is required")
     @Size(min = 8, message = "Password must be at least 8 characters")
@@ -19,4 +23,4 @@ public class ResetPasswordDTO {
 
     @NotBlank(message = "Confirm password is required")
     private String confirmPassword;
-}
+} 

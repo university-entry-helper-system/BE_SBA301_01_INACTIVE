@@ -45,6 +45,9 @@ public class JwtServiceImpl implements JwtService {
     @Value("${jwt.resetKey}")
     private String resetKey;
 
+    @Value("${jwt.activationKey}")
+    private String activationKey;
+
     @Override
     public String generateToken(UserDetails account) {
         return generateToken(new HashMap<>(), account);
@@ -57,7 +60,11 @@ public class JwtServiceImpl implements JwtService {
 
     @Override
     public String generateResetToken(UserDetails account) {
-        return generateRefreshToken(new HashMap<>(), account);
+        return generateResetToken(new HashMap<>(), account);
+    }
+
+    public String generateActivationToken(UserDetails account) {
+        return generateActivationToken(new HashMap<>(), account);
     }
 
     @Override
@@ -109,17 +116,32 @@ public class JwtServiceImpl implements JwtService {
                 .compact();
     }
 
+    private String generateActivationToken(Map<String, Object> claims, UserDetails userDetails) {
+        log.info("---------- generateActivationToken ----------");
+
+        return Jwts.builder()
+                .setClaims(claims)
+                .setSubject(userDetails.getUsername())
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24))  // 24 hours expiry
+                .signWith(getKey(ACTIVATION_TOKEN), SignatureAlgorithm.HS256)
+                .compact();
+    }
+
     private Key getKey(TokenType type) {
         log.info("---------- getKey ----------");
         switch (type) {
             case ACCESS_TOKEN -> {
-                return Keys.hmacShaKeyFor(Decoders.BASE64.decode(accessKey));  // Using base64 decoded keys
+                return Keys.hmacShaKeyFor(Decoders.BASE64.decode(accessKey));
             }
             case REFRESH_TOKEN -> {
-                return Keys.hmacShaKeyFor(Decoders.BASE64.decode(refreshKey));  // Using base64 decoded keys
+                return Keys.hmacShaKeyFor(Decoders.BASE64.decode(refreshKey));
             }
             case RESET_TOKEN -> {
-                return Keys.hmacShaKeyFor(Decoders.BASE64.decode(resetKey));  // Using base64 decoded keys
+                return Keys.hmacShaKeyFor(Decoders.BASE64.decode(resetKey));
+            }
+            case ACTIVATION_TOKEN -> {
+                return Keys.hmacShaKeyFor(Decoders.BASE64.decode(activationKey));
             }
             default -> throw new InvalidDataException("Invalid token type");
         }

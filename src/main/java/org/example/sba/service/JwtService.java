@@ -1,17 +1,20 @@
 package org.example.sba.service;
 
-import org.springframework.security.core.userdetails.UserDetails;
+import org.example.sba.model.Account;
 import org.example.sba.util.TokenType;
+import org.springframework.security.core.userdetails.UserDetails;
 
 public interface JwtService {
 
-    String generateToken(UserDetails account);
+    String generateToken(UserDetails userDetails);
 
-    String generateRefreshToken(UserDetails account);
+    String generateRefreshToken(UserDetails userDetails);
 
-    String generateResetToken(UserDetails account);
+    String generateResetToken(UserDetails userDetails);
 
-    String extractUsername(String token, TokenType type);
+    String generateActivationToken(UserDetails userDetails);
 
-    boolean isValid(String token, TokenType type, UserDetails account);
+    String extractUsername(String token, TokenType tokenType);
+
+    boolean isValid(String token, TokenType tokenType, UserDetails userDetails);
 }

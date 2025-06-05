@@ -53,8 +53,17 @@ public class AppConfig {
         http
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/auth/register", "/auth/access-token", "/auth/refresh-token", 
-                               "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                .requestMatchers(
+                    "/auth/register",
+                    "/auth/access-token",
+                    "/auth/refresh-token",
+                    "/auth/forgot-password",
+                    "/auth/reset-password",
+                    "/auth/activate",
+                    "/v3/api-docs/**",
+                    "/swagger-ui/**",
+                    "/swagger-ui.html"
+                ).permitAll()
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
@@ -80,8 +89,8 @@ public class AppConfig {
     @Bean
     public AuthenticationProvider provider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setUserDetailsService(accountService.accountDetailsService());
-        provider.setPasswordEncoder(passwordEncoder); // Use injected PasswordEncoder
+        provider.setUserDetailsService(accountService);
+        provider.setPasswordEncoder(passwordEncoder);
         return provider;
     }
 }

@@ -55,4 +55,14 @@ public class EmailServiceImpl implements EmailService {
                 "http://localhost:8080/auth/activate?token=" + activationToken);
         mailSender.send(message);
     }
+
+    @Override
+    public void sendResetPasswordEmail(String to, String resetToken) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject("Reset your password");
+        message.setText("Please click the following link to reset your password:\n" +
+                "http://localhost:8080/reset-password?token=" + resetToken);
+        mailSender.send(message);
+    }
 }

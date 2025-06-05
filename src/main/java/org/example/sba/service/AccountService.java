@@ -10,7 +10,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 
 import java.util.List;
 
-public interface AccountService {
+public interface AccountService extends UserDetailsService {
 
     AccountDetailResponse saveAccount(AccountRequestDTO request);
 
@@ -18,11 +18,9 @@ public interface AccountService {
 
     long saveAccount(Account account);
 
-    UserDetailsService accountDetailsService();
-
     Account getByUsername(String username);
 
-    Account getAccountByEmail(String email);
+    Account getByEmail(String email);
 
     List<Role> findRolesByAccountId(long accountId);
 
@@ -37,4 +35,6 @@ public interface AccountService {
     PageResponse<?> getAllAccounts(int pageNo, int pageSize);
 
     void confirmAccountByEmail(String email);
+
+    Account save(Account account);
 }
